@@ -9,15 +9,14 @@ class Main {
         tickers.addAll(getTickers("http://www.ravaonline.com/v2/precios/panel.php?m=LID"))
         tickers = tickers.sort()
         InputStream input = null
-        Set<Reader> readers = new HashSet<>(75)
-        Map<String, Reader> mReader = new HashMap<>(75)
+        Map<String, Reader> readers = new HashMap<>(75)
         withPool(32) {
             tickers.collectParallel {
                 input = new URL("http://www.ravaonline.com/v2/empresas/precioshistoricos.php?e=${it}&csv=1").openStream()
-                mReader.put(it, new InputStreamReader(input, "UTF-8"))
+                readers.put(it, new InputStreamReader(input, "UTF-8"))
             }
         }
-        println(mReader)
+        println(readers)
 
 
 
@@ -31,7 +30,6 @@ class Main {
         return nodes.collect {
             it[1].text()
         }
-
     }
 
 }
