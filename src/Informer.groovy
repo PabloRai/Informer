@@ -15,12 +15,17 @@ class Main {
             readers.each { ticker, reader ->
                 lines = reader
                 lines.removeAll(TickerUtils.nonData)
-                mathematicalHope.put(ticker, TickerUtils.getPorcentage(lines))
+                mathematicalHope.put(ticker, TickerUtils.getPercentage(lines))
             }
         } else {
             println("Algo salio mal")
         }
-        println(mathematicalHope)
+        mathematicalHope = mathematicalHope.sort {a,b ->
+            a.value < b.value ? 1 : -1
+        }
+        mathematicalHope.each {
+            println(it)
+        }
         println("Done")
 
 

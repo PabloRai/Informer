@@ -1,29 +1,25 @@
+import groovy.transform.Synchronized
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-
 import static groovyx.gpars.GParsPool.withPool
+import groovyx.gpars.GParsExecutorsPoolEnhancer
 
 class TickerUtils {
     static String[] nonData = ["", "fecha,apertura,maximo,minimo,cierre,volumen,openint"]
+
+    @Synchronized
     static HashMap<String, List<String>> getHistoricalData(Set<String> tickers) {
         Map<String, List<String>> result = new HashMap<>(79)
-
         InputStream input = null
-
-
-        tickers.each {
+        GParsExecutorsPoolEnhancer.enhanceInstance(tickers)
+        tickers.eachParallel {
             input = new URL("http://www.ravaonline.com/v2/empresas/precioshistoricos.php?e=${it}&csv=1").openStream()
             println("Getting: $it")
-
             result.put(it, input.readLines())
-            input.close()
-
         }
         return result
-
-
 
     }
 
@@ -37,7 +33,7 @@ class TickerUtils {
         }
     }
 
-    static double getPorcentage( List<String> lines, int times = 100, int holdingTime = 60) {
+    static double getPercentage( List<String> lines, int times = 100, int holdingTime = 60) {
         try {
             lines = lines.subList(1000, lines.size() - 1)
             double result = 0
