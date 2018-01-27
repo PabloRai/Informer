@@ -3,7 +3,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 
-import static groovyx.gpars.GParsPool.withPool
 import groovyx.gpars.GParsExecutorsPoolEnhancer
 
 class TickerUtils {
@@ -16,8 +15,13 @@ class TickerUtils {
         GParsExecutorsPoolEnhancer.enhanceInstance(tickers)
         tickers.eachParallel {
             input = new URL("http://www.ravaonline.com/v2/empresas/precioshistoricos.php?e=${it}&csv=1").openStream()
-            println("Getting: $it")
-            result.put(it, input.readLines())
+            try {
+                result.put(it, input.readLines())
+
+            } catch (Exception ignored) {
+                println("Failed to fetch $it")
+            }
+
         }
         return result
 
@@ -35,26 +39,33 @@ class TickerUtils {
 
     static double getPercentage( List<String> lines, int times = 100, int holdingTime = 60) {
         try {
-            lines = lines.subList(1000, lines.size() - 1)
+            if(lines. size() > 2000) {
+                lines = lines.subList(1000, lines.size() - 1)
+            }
             double result = 0
             String[] line
-            double initialValue
+            double initialValue = 0
             double finalValue
             double percent
             Random random = new Random()
-            int myRandomNumber
+            int myRandomNumber = 0
             for (int i = 0; i < times; i++) {
-                myRandomNumber = random.nextInt(Math.abs(lines.size() - 1 - times))
-                line = lines[myRandomNumber].replace("\"", "")?.split(",")
-                initialValue = line[1] as double
+                while (initialValue == 0) {
+                    myRandomNumber = random.nextInt(Math.abs(lines.size() - 1 - holdingTime))
+                    line = lines[myRandomNumber].replace("\"", "")?.split(",")
+                    initialValue = line[1] as double
+                }
+
                 line = lines[myRandomNumber + holdingTime].replace("\"", "")?.split(",")
                 finalValue = line[1] as double
                 percent = ((finalValue - initialValue) / initialValue) * 100
                 result += percent
+
+                initialValue = 0
             }
             result /= times
             return result
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             return 0
         }
     }

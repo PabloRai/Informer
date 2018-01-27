@@ -11,14 +11,22 @@ class Main {
 
         List<String> lines
 
-        if(readers.size() == tickers.size()) {
-            readers.each { ticker, reader ->
-                lines = reader
-                lines.removeAll(TickerUtils.nonData)
-                mathematicalHope.put(ticker, TickerUtils.getPercentage(lines))
-            }
-        } else {
-            println("Algo salio mal")
+        while (readers.size() != tickers.size()) {
+            println("Readers size: ${readers.size()}")
+            println("Tickers size: ${tickers.size()}")
+            println("Some tickers where not fetched, retrying..")
+            Set<String> fallbackTickers = tickers.clone() as Set<String>
+            fallbackTickers.removeAll(readers.keySet())
+            println("The tickers are: $fallbackTickers")
+            readers.putAll(TickerUtils.getHistoricalData(fallbackTickers))
+        }
+
+
+
+        readers.each { ticker, reader ->
+            lines = reader
+            lines.removeAll(TickerUtils.nonData)
+            mathematicalHope.put(ticker, TickerUtils.getPercentage(lines))
         }
         mathematicalHope = mathematicalHope.sort {a,b ->
             a.value < b.value ? 1 : -1
@@ -26,7 +34,6 @@ class Main {
         mathematicalHope.each {
             println(it)
         }
-        println("Done")
 
 
 
